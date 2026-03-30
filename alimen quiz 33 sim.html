@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Quiz Simulator</title>
+
+<style>
+body { font-family: Arial; margin:0; background:#f5f5f5; }
+
+.container {
+    max-width:800px;
+    margin:auto;
+    background:white;
+    padding:20px;
+    border-radius:10px;
+    margin-top:40px;
+}
+
+.home {
+    text-align:center;
+    padding:100px 20px;
+}
+
+.go-btn {
+    font-size:24px;
+    padding:15px 40px;
+    background:#28a745;
+    color:white;
+    border:none;
+    border-radius:10px;
+    cursor:pointer;
+}
+
+.timer { font-weight:bold; margin-bottom:10px; color:#dc3545; text-align:right; }
+
+.options label {
+    display:block;
+    margin:8px 0;
+    padding:10px;
+    border:1px solid #ddd;
+    border-radius:6px;
+    cursor:pointer;
+}
+
+.selected {
+    background:#cce5ff !important;
+}
+
+button {
+    padding:10px 20px;
+    margin:5px;
+    border:none;
+    border-radius:6px;
+    background:#007bff;
+    color:white;
+    cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+
+<div id="home" class="container home">
+    <h1>Quiz Simulator</h1>
+    <button class="go-btn" onclick="startQuiz()">GO!</button>
+</div>
+
+<div id="quizContainer" class="container" style="display:none;">
+    <div class="timer">Waktu: <span id="time">00:00</span></div>
+    <h2 id="result"></h2>
+    <div id="quiz"></div>
+    <div id="nav-buttons"></div>
+</div>
+
+<script>
+let questions = [
+    {
+        q: "CA 15-3 adalah salah satu tumor marker yang paling sering pada pancreatic cancer.",
+        options: ["True", "False"],
+        answer: 1,
+        explain: "Salah. Tumor marker kanker pankreas adalah CA 19-9."
+    },
+    {
+        q: "Selain pada jaringan hati, GGT juga ditemukan pada ginjal.",
+        options: ["True", "False"],
+        answer: 0,
+        explain: "Benar. Sesuai materi, GGT juga ditemukan pada ginjal."
+    },
+    {
+        q: "Pemeriksaan yang dilakukan untuk mengetahui derajat kerusakan hepatosit adalah ALT.",
+        options: ["True", "False"],
+        answer: 0,
+        explain: "Benar. ALT digunakan untuk menilai kerusakan hepatosit."
+    },
+    {
+        q: "AST adalah nama lain dari SGPT.",
+        options: ["True", "False"],
+        answer: 1,
+        explain: "Salah. AST = SGOT, sedangkan ALT = SGPT."
+    },
+    {
+        q: "Bila seseorang memiliki hasil Anti-HBs (+), maka sudah pasti orang tersebut sudah pernah divaksinasi hepatitis.",
+        options: ["True", "False"],
+        answer: 1,
+        explain: "Salah. Anti-HBs positif bisa karena vaksinasi atau karena sudah sembuh dari hepatitis B."
+    },
+    {
+        q: "Antacids di bawah ini yang sulit diabsorpsi di saluran cerna, tapi dapat menyebabkan efek samping diare ialah?",
+        options: [
+            "Kombinasi Magnesium/Aluminum hydroxide",
+            "Aluminium hydroxide",
+            "Magnesium Trisilikat",
+            "Magnesium hydroxide",
+            "Calcium carbonate"
+        ],
+        answer: 3,
+        explain: "Magnesium hydroxide sulit diabsorpsi dan dapat menyebabkan diare."
+    },
+    {
+        q: "Antibiotik yang efektif digunakan membunuh Helicobacter pylori pada peptic ulcer ialah:",
+        options: [
+            "Gentamycin",
+            "Erythromycin",
+            "Chloramphenicol",
+            "Vancomycin",
+            "Tetracycline dan Metronidazole"
+        ],
+        answer: 4,
+        explain: "Kunci jawaban pada materi adalah tetracycline dan metronidazole."
+    },
+    {
+        q: "Berikut merupakan suplementasi pankreas:",
+        options: [
+            "B-blocker",
+            "Loperamide",
+            "Vasopressin",
+            "Ursodiol",
+            "Pankreatin"
+        ],
+        answer: 4,
+        explain: "Pankreatin adalah suplementasi enzim pankreas."
+    },
+    {
+        q: "Laki-laki 17 tahun datang ke klinik dengan keluhan tremor dan gejala lain seperti penyakit Parkinson setelah mengonsumsi obat anti muntah. Obat anti muntah manakah yang menyebabkan keluhan tersebut?",
+        options: [
+            "Metoclopramide",
+            "Scopolamine",
+            "Domperidone",
+            "Ondansetron",
+            "Dimenhydrinate"
+        ],
+        answer: 0,
+        explain: "Metoclopramide dapat menyebabkan efek samping ekstrapiramidal."
+    },
+    {
+        q: "Pasien varises esofagus mengalami peningkatan tekanan darah setelah diberikan obat. Obat manakah yang kira-kira mengakibatkan efek samping tersebut?",
+        options: [
+            "Carvedilol",
+            "Vasopresin",
+            "Oktreotid",
+            "Somatostatin",
+            "Propanolol"
+        ],
+        answer: 1,
+        explain: "Vasopresin dapat menyebabkan vasokonstriksi dan peningkatan tekanan darah."
+    },
+    {
+        q: "Manakah pernyataan berikut yang tidak benar mengenai suplementasi enzim pankreas?",
+        options: [
+            "Suplementasi enzim pankreas mengandung campuran enzim amylase, lipase, dan protease",
+            "Terdapat suplementasi enzim pankreas dalam sediaan salut enteric",
+            "Suplementasi enzim pankreas beberapa dibuat dari pankreas babi",
+            "Dosis awal pankrelipase diberikan 20-30 IU",
+            "Suplementasi enzim pankreas biasanya diberikan 1 jam setelah makan"
+        ],
+        answer: 4,
+        explain: "Pernyataan ini tidak benar menurut materi."
+    },
+    {
+        q: "Obat berikut tidak mempunyai efek anti muntah, tapi dapat menyebabkan diare:",
+        options: [
+            "Dexamethasone",
+            "Magnesium sulfat (MgSO4)",
+            "Ondansetron",
+            "Dolasetron",
+            "Phenothiazine"
+        ],
+        answer: 1,
+        explain: "Magnesium sulfat bukan antiemetik dan dapat menyebabkan diare."
+    },
+    {
+        q: "Seorang pasien datang dengan keluhan sulit buang air besar (konstipasi). Obat di bawah ini yang paling baik untuk menanggulangi konstipasi ialah:",
+        options: [
+            "Difenoxin",
+            "Diphenoxylate",
+            "Loperamide",
+            "Docusate",
+            "Kaolin dan pectin"
+        ],
+        answer: 3,
+        explain: "Docusate adalah pelunak feses untuk konstipasi."
+    },
+    {
+        q: "Seorang pasien Diabetes Melitus mengalami gastroparesis. Obat yang baik untuk memperbaiki motilitas esofagus ialah?",
+        options: [
+            "Domperidon",
+            "Glycerin",
+            "Atropin",
+            "Loperamide",
+            "Phenothiazine"
+        ],
+        answer: 0,
+        explain: "Domperidon membantu meningkatkan motilitas gastrointestinal."
+    },
+    {
+        q: "Apakah komplikasi akut dari esofagitis korosif?",
+        options: [
+            "Akalasia sekunder",
+            "Striktur esofagus",
+            "Keganasan esofagus",
+            "Sepsis",
+            "Asidosis respiratorik"
+        ],
+        answer: 3,
+        explain: "Komplikasi akut yang sesuai adalah sepsis."
+    },
+    {
+        q: "Apakah penatalaksanaan esofagitis korosif akibat menelan button battery?",
+        options: [
+            "Pemberian sukralfat",
+            "Gastric lavage",
+            "Esofagoskopi ekstraksi",
+            "Gastrostomi",
+            "Gastric pull up"
+        ],
+        answer: 2,
+        explain: "Button battery perlu segera diekstraksi dengan esofagoskopi."
+    },
+    {
+        q: "Apakah tanda khas terjadinya perforasi esofagus pada foto polos toraks?",
+        options: [
+            "Ground glass appearance",
+            "Double ring appearance",
+            "Turban sign",
+            "Thumb sign",
+            "Gas bebas di mediastinum"
+        ],
+        answer: 4,
+        explain: "Perforasi esofagus dapat menunjukkan gas bebas di mediastinum."
+    },
+    {
+        q: "Apakah terapi yang dapat diberikan pada pasien dengan esofagitis korosif pada fase akut?",
+        options: [
+            "Gastric lavage",
+            "Dilatasi esofagus",
+            "Proton pump inhibitor",
+            "Pemberian agen emesis",
+            "Agen penetral"
+        ],
+        answer: 2,
+        explain: "Terapi fase akut dapat berupa proton pump inhibitor."
+    },
+    {
+        q: "Di manakah lokasi trauma utama pada ingesti bahan korosif yang padat?",
+        options: [
+            "Gaster",
+            "Orofaring",
+            "Valekula",
+            "Sinus piriformis",
+            "Esofagus"
+        ],
+        answer: 1,
+        explain: "Bahan korosif padat terutama menyebabkan trauma di orofaring."
+    },
+    {
+        q: "Heartburn merupakan gejala atipikal dari GERD.",
+        options: ["True", "False"],
+        answer: 1,
+        explain: "Salah. Heartburn dan regurgitasi adalah gejala tipikal GERD."
+    },
+    {
+        q: "Pasien dengan gejala heartburn dan penurunan berat badan tidak perlu dilakukan endoskopi untuk pemeriksaan lanjutan.",
+        options: ["True", "False"],
+        answer: 1,
+        explain: "Salah. Penurunan berat badan adalah alarm symptom, sehingga perlu endoskopi."
+    },
+    {
+        q: "Poin GerdQ dengan nilai 7 menandakan pasien kemungkinan menderita GERD.",
+        options: ["True", "False"],
+        answer: 1,
+        explain: "Salah. Jika skor GERDQ kurang dari atau sama dengan 7, kemungkinan tidak GERD."
+    },
+    {
+        q: "Test PPI dilakukan dengan menggunakan PPI dosis tunggal selama 2 minggu.",
+        options: ["True", "False"],
+        answer: 1,
+        explain: "Salah. PPI test menggunakan dosis ganda."
+    },
+    {
+        q: "Dosis tunggal pemberian lansoprazole adalah 20 mg.",
+        options: ["True", "False"],
+        answer: 1,
+        explain: "Salah. Dosis tunggal lansoprazole adalah 30 mg."
+    },
+    {
+        q: "A 7 years old boy came to pediatric clinic with blood and mucous in the stool, high fever, and tenesmus. The proper antibiotics for this patient is:",
+        options: [
+            "Ampicilin",
+            "Gentamycin",
+            "Cefixim",
+            "Tetracycline",
+            "Metronidazole"
+        ],
+        answer: 2,
+        explain: "Gambaran klinis mengarah ke Shigella, dan kunci pada materi adalah cefixim."
+    },
+    {
+        q: "An eleven months old baby with watery stools, irritable, eager to drink, and sunken eyes. The proper rehydration for this condition is:",
+        options: [
+            "IVFD KaEN 3 B 70 cc/kgBW in 2 hours",
+            "IVFD Dextrosa 5% 30 cc/kgBW in 1 hour",
+            "Hypoosmolar Oralyte 10 ml every defecation",
+            "IVFD RL 30 cc/kgBW in 1 hour followed by 70 cc/kgBW in 5 hours",
+            "Hypoosmolar Oralyte 75 ml/kgBW in 3 hours"
+        ],
+        answer: 4,
+        explain: "Tanda dehidrasi ringan-sedang ditatalaksana dengan Plan B: oralit 75 ml/kgBB dalam 3 jam."
+    },
+    {
+        q: "Pada kasus bayi 11 bulan dengan diare cair dan muntah, possible location of infection is:",
+        options: [
+            "Esofagus",
+            "Gaster",
+            "Rectum",
+            "Small intestine",
+            "Ileocolon"
+        ],
+        answer: 3,
+        explain: "Kunci materi menunjukkan infeksi kemungkinan di small intestine."
+    },
+    {
+        q: "Pada kasus bayi 11 bulan dengan diare cair tanpa darah, mekanisme diare pasien ini adalah:",
+        options: [
+            "Secretory",
+            "A,B are correct",
+            "Osmotic",
+            "A,B,C are correct",
+            "Inflammatory"
+        ],
+        answer: 1,
+        explain: "Kunci materi adalah A dan B benar."
+    },
+    {
+        q: "The triad for intussusception are:",
+        options: [
+            "Colic, vomiting, abdominal distention",
+            "Colic, fever, currant jelly stool",
+            "Vomiting, fever, currant jelly stool",
+            "Colic, abdominal distention, currant jelly stool",
+            "Colic, vomiting, currant jelly stool"
+        ],
+        answer: 4,
+        explain: "Trias klasik intususepsi adalah kolik, muntah, dan currant jelly stool."
+    },
+    {
+        q: "Metode diagnostik untuk infeksi H. pylori yang aktif adalah sebagai berikut, KECUALI:",
+        options: [
+            "HpSA",
+            "PCR",
+            "Rapid Urease test",
+            "Urea Breath Test",
+            "Tes serologi"
+        ],
+        answer: 4,
+        explain: "Tes serologi tidak menandakan infeksi aktif."
+    },
+    {
+        q: "Pernyataan yang benar tentang infeksi H. pylori antral predominant:",
+        options: [
+            "Dapat terjadi hipogastrinemia",
+            "Sekresi somatostatin meningkat",
+            "Bisa menimbulkan adenocarcinoma gaster di kemudian hari",
+            "Dapat menimbulkan ulkus duodenum",
+            "Terjadi penurunan sekresi dari kelenjar oxyntic"
+        ],
+        answer: 3,
+        explain: "H. pylori antral predominant dapat meningkatkan asam lambung dan menimbulkan ulkus duodenum."
+    },
+    {
+        q: "Pernyataan yang TIDAK BENAR tentang ulkus peptikum oleh karena NSAID adalah:",
+        options: [
+            "Ulkus terjadi karena kerusakan barrier mukosa",
+            "NSAID selective COX-2 lebih aman dibandingkan dengan yang non-selective",
+            "Lokasi ulkus sering ditemukan di daerah antrum",
+            "Jumlah ulkus biasanya multipel",
+            "Kejadian ulkus peptikum bisa dicegah dengan pemberian NSAID injeksi atau suppositoria"
+        ],
+        answer: 4,
+        explain: "Pemberian injeksi atau suppositoria tidak mencegah ulkus peptikum akibat NSAID."
+    },
+    {
+        q: "Yang sesuai dengan gastritis kronis di bawah ini adalah:",
+        options: [
+            "Paling sering disebabkan oleh virus",
+            "Gastritis yang terjadi dalam waktu > 2 minggu",
+            "Gejala utamanya nyeri epigastrium disertai berat badan menurun",
+            "Gambaran endoskopinya menunjukkan hiperemis, erosi dan fibrosis",
+            "Pada pemeriksaan histologi menunjukkan adanya infiltrasi sel-sel limfosit"
+        ],
+        answer: 4,
+        explain: "Gastritis kronis pada histologi ditandai infiltrasi limfosit."
+    },
+    {
+        q: "Yang sesuai untuk gastritis non-atrofi adalah:",
+        options: [
+            "Sering disebabkan oleh infeksi H. pylori",
+            "Faktor risiko terjadinya MALToma",
+            "Sering menjadi adenocarcinoma tipe intestinal",
+            "Lokasinya sering terjadi di korpus gaster",
+            "Sekresi kelenjar oxyntic mengalami penurunan produksi"
+        ],
+        answer: 0,
+        explain: "Gastritis non-atrofi sering disebabkan oleh infeksi H. pylori."
+    },
+    {
+        q: "Diagnosis IBS saat ini sesuai Kriteria ROME IV. Pernyataan yang benar sesuai kriteria tersebut adalah:",
+        options: [
+            "Onset pada usia muda",
+            "Keluhan diare minimal 1 kali dalam 1 bulan",
+            "Bisa ada keluhan nyeri perut",
+            "Kotoran disertai mucus atau lender",
+            "Keluhan berlangsung minimal dalam 6 bulan"
+        ],
+        answer: 4,
+        explain: "Kunci materi menunjukkan keluhan berlangsung minimal 6 bulan."
+    },
+    {
+        q: "Pasien laki-laki 75 tahun dengan nyeri perut kiri bawah, demam, dan kebiasaan jarang makan sayur dan buah. Apa kemungkinan diagnosis pasien ini?",
+        options: [
+            "Diverticulosis",
+            "IBS",
+            "Diverticulitis",
+            "Apendisitis akut",
+            "Amobiasis"
+        ],
+        answer: 2,
+        explain: "Keluhan paling sesuai dengan diverticulitis."
+    },
+    {
+        q: "Perempuan 55 tahun dengan diare berdarah volume kecil, darah merah gelap, kolik, kram perut bawah, tanpa demam. Apa diagnosis paling mungkin?",
+        options: [
+            "IBD",
+            "Diverticulitis",
+            "Disentri amoeba",
+            "Kanker usus besar",
+            "Diverticulosis"
+        ],
+        answer: 2,
+        explain: "Gambaran klinis sesuai disentri amoeba."
+    },
+    {
+        q: "Perempuan 65 tahun dengan nyeri kuadran kanan atas, demam, ikterus, dan riwayat nyeri hilang timbul sebelumnya. Terapi terbaik adalah:",
+        options: [
+            "Parasetamol",
+            "Hyosin N methyl bromide",
+            "Ceftriaxone",
+            "Petidin",
+            "Operasi cholecystectomy"
+        ],
+        answer: 4,
+        explain: "Pada kasus ini terapi terbaik pada materi adalah operasi cholecystectomy."
+    },
+    {
+        q: "Tanda alarm yang harus dicari pada IBS adalah:",
+        options: [
+            "Peningkatan berat badan",
+            "Peningkatan hemoglobin",
+            "Perdarahan per anus",
+            "Riwayat keluarga dengan IBS",
+            "Onset saat umur 40 tahun"
+        ],
+        answer: 2,
+        explain: "Perdarahan per anus merupakan tanda alarm."
+    },
+    {
+        q: "Kejadian food intoleran lebih jarang dari food alergi.",
+        options: ["True", "False"],
+        answer: 1,
+        explain: "Salah."
+    },
+    {
+        q: "Food intoleran memiliki gejala yang lebih berat dari food alergi.",
+        options: ["True", "False"],
+        answer: 1,
+        explain: "Salah."
+    },
+    {
+        q: "Untuk mendiagnosis food intoleran, sama sekali tidak diperlukan pemeriksaan penunjang.",
+        options: ["True", "False"],
+        answer: 1,
+        explain: "Salah."
+    },
+    {
+        q: "Orang yang mengalami food alergi, selamanya tidak boleh makan makanan penyebab.",
+        options: ["True", "False"],
+        answer: 0,
+        explain: "Benar."
+    },
+    {
+        q: "Orang yang mengalami food intoleran, selamanya tidak boleh makan makanan penyebab.",
+        options: ["True", "False"],
+        answer: 1,
+        explain: "Salah."
+    },
+    {
+        q: "A twelve year old boy with dark urine, fever, nausea, vomiting, and icteric sclera. Laboratory investigations to confirm hepatitis A diagnosis are:",
+        options: [
+            "AST, ALT, IgM anti HAV",
+            "AST, ALT, PCR HAV",
+            "AST, ALT, HBsAg",
+            "AST, ALT, Albumin, Prothrombin time",
+            "AST, ALT, IgG anti HAV"
+        ],
+        answer: 0,
+        explain: "Diagnosis hepatitis A akut dikonfirmasi dengan AST, ALT, dan IgM anti-HAV."
+    },
+    {
+        q: "Pada pasien hepatitis akut, serial laboratory investigation needed are:",
+        options: [
+            "AST, ALT, Albumin, Bilirubin, Prothrombin time",
+            "AST, ALT, Albumin, Prothrombin time",
+            "AST, ALT, IgM anti HAV",
+            "AST, ALT, BT, CT",
+            "AST, ALT, Partial Thromboplastin Time, Albumin"
+        ],
+        answer: 0,
+        explain: "Pemantauan serial mencakup AST, ALT, albumin, bilirubin, dan prothrombin time."
+    },
+    {
+        q: "Based on IDAI recommendation, Hepatitis A vaccine can be given:",
+        options: [
+            "By injection intracutan",
+            "Once in a lifetime",
+            "Since 3 months old",
+            "By oral",
+            "After one year old"
+        ],
+        answer: 4,
+        explain: "Vaksin hepatitis A diberikan setelah usia satu tahun."
+    },
+    {
+        q: "Specific sign of protein malabsorption is:",
+        options: [
+            "Koilonychia",
+            "Abdominal distention",
+            "Steatorrhea",
+            "Cheilitis angularis",
+            "Foul smelling stool"
+        ],
+        answer: 4,
+        explain: "Kunci materi adalah foul smelling stool."
+    },
+    {
+        q: "The phenotype of Hepatitis A that can live in room temperature is:",
+        options: [
+            "Naked and quasi enveloped virion",
+            "Quasi enveloped virion",
+            "Naked virion",
+            "Enveloped and naked virion",
+            "Enveloped virion"
+        ],
+        answer: 2,
+        explain: "Bentuk yang dapat bertahan di suhu ruangan adalah naked virion."
+    },
+    {
+        q: "Terdapat 15 genotip dari virus hepatitis B yaitu genotip A-O.",
+        options: ["True", "False"],
+        answer: 1,
+        explain: "Salah. Genotip hepatitis B yang dikenal adalah A-J."
+    },
+    {
+        q: "Genotip C memiliki kemungkinan hilangnya HBsAg yang lebih tinggi dibandingkan genotip B.",
+        options: ["True", "False"],
+        answer: 1,
+        explain: "Salah."
+    },
+    {
+        q: "Pada perjalanan penyakit hepatitis B, pada fase imunotoleran, terjadi peningkatan ALT.",
+        options: ["True", "False"],
+        answer: 1,
+        explain: "Salah. ALT biasanya tidak meningkat pada fase imunotoleran."
+    },
+    {
+        q: "Pada perjalanan penyakit hepatitis B, pada fase inactive carrier, kadar ALT umumnya normal.",
+        options: ["True", "False"],
+        answer: 0,
+        explain: "Benar."
+    },
+    {
+        q: "Salah satu manifestasi ekstrahepatik dari infeksi hepatitis B kronik yaitu glomerulonephritis.",
+        options: ["True", "False"],
+        answer: 0,
+        explain: "Benar."
+    },
+    {
+        q: "Kriteria untuk menyatakan infeksi hepatitis B kronik yaitu HBsAg seropositive > 3 bulan.",
+        options: ["True", "False"],
+        answer: 1,
+        explain: "Salah. Kriteria kronik adalah HBsAg positif lebih dari 6 bulan."
+    },
+    {
+        q: "Target ideal dari terapi hepatitis B kronik yaitu hilangnya HBsAg.",
+        options: ["True", "False"],
+        answer: 0,
+        explain: "Benar. Target ideal terapi adalah hilangnya HBsAg."
+    },
+    {
+        q: "Pada terapi infeksi hepatitis B, pendekatan short term 'curative' treatment digunakan jika menggunakan obat nucleos(t)ida analog.",
+        options: ["True", "False"],
+        answer: 1,
+        explain: "Salah."
+    },
+    {
+        q: "Telbivudine merupakan pilihan pertama dalam pengobatan infeksi hepatitis B dengan kondisi treatment-naive.",
+        options: ["True", "False"],
+        answer: 1,
+        explain: "Salah."
+    },
+    {
+        q: "Pemeriksaan USG dan AFP perlu dilakukan setiap 6 bulan pada pasien infeksi HBV kronik risiko tinggi sebagai surveilans karsinoma hepatoselular.",
+        options: ["True", "False"],
+        answer: 0,
+        explain: "Benar."
+    },
+    {
+        q: "Modifikasi gaya hidup merupakan bagian penting dari penanganan MASLD. Yang mana pernyataan di bawah ini yang tidak benar tentang perubahan gaya hidup?",
+        options: [
+            "Meningkatkan aktifitas fisik",
+            "Menurunkan berat badan",
+            "Mengganti lemak tidak jenuh dengan lemak jenuh",
+            "Mengurangi asupan lemak total",
+            "Meningkatkan asupan serat > 15 g/hari"
+        ],
+        answer: 2,
+        explain: "Yang tidak benar adalah mengganti lemak tidak jenuh dengan lemak jenuh."
+    },
+    {
+        q: "Semua berikut ini berperan dalam patofisiologi penyakit hati akibat alkohol, KECUALI:",
+        options: [
+            "Rasio NADH/NAD+ menurun",
+            "Asetaldehide bersifat hepatotoksik",
+            "Rentan secara genetik",
+            "Permeabilitas usus meningkat",
+            "Endotoksinemia menyebabkan pelepasan sitokin pro-inflamasi"
+        ],
+        answer: 0,
+        explain: "Yang benar justru rasio NADH/NAD+ meningkat."
+    },
+    {
+        q: "Wanita 45 tahun dengan DM dan fatty liver. Pemeriksaan apa yang disarankan?",
+        options: [
+            "Gula darah",
+            "Asam urat",
+            "Lipid profile, gula darah, asam urat",
+            "Lipid profile",
+            "Lipid profile, gula darah"
+        ],
+        answer: 2,
+        explain: "Perlu evaluasi komponen sindrom metabolik, termasuk lipid profile, gula darah, dan asam urat."
+    },
+    {
+        q: "Wanita 50 tahun non-alkoholik dengan fatty liver, hepatomegali ringan, dislipidemia, dan hiperglikemia. Diagnosis yang benar, KECUALI:",
+        options: [
+            "Isolated fatty liver",
+            "MASLD",
+            "Hepatic steatosis",
+            "MASH",
+            "Sindroma metabolik"
+        ],
+        answer: 3,
+        explain: "Yang tidak sesuai adalah MASH."
+    },
+    {
+        q: "Yang tidak berhubungan dengan kejadian MASLD adalah:",
+        options: [
+            "DM tipe 2",
+            "Defisiensi insulin",
+            "Dislipidemia",
+            "Hipertensi",
+            "Obesitas"
+        ],
+        answer: 1,
+        explain: "Defisiensi insulin bukan faktor yang sesuai pada MASLD."
+    },
+    {
+        q: "Pernyataan berikut ini tidak sesuai untuk gambaran imaging dari abses hati:",
+        options: [
+            "Color Doppler Ultrasound bisa membedakan antara abses dengan tumor",
+            "CT scan atau USG tidak bisa membedakan antara abses amoeba dengan piogenik",
+            "Gambaran abses berupa lesi hiperekoik",
+            "Gambar sonografi abses tampak bulat, homogen, dan lokasinya dekat dengan kapsul hati",
+            "CT scan dengan kontras intravena sering menunjukkan adanya penguatan di central"
+        ],
+        answer: 2,
+        explain: "Abses hati umumnya tampak hipoekoik, bukan hiperekoik."
+    },
+    {
+        q: "Pernyataan di bawah ini sesuai dengan abses hati amoeba:",
+        options: [
+            "Lebih sering ditemukan pada wanita dibandingkan dengan laki-laki",
+            "Amebiasis intestinal sering menjadi abses hati",
+            "Diagnosis pasti dengan kultur dari bahan aspirat abses",
+            "Diameter abses > 6 cm harus diberikan antibiotika lebih dari 4 minggu",
+            "Abses di lobus kiri memerlukan penanganan yang lebih agresif"
+        ],
+        answer: 4,
+        explain: "Abses lobus kiri lebih berbahaya dan memerlukan penanganan lebih agresif."
+    },
+    {
+        q: "Pria 25 tahun dengan abses tunggal di lobus kanan hepar diameter 8 cm. Apa penanganan selanjutnya?",
+        options: [
+            "Metronidazole 500 mg iv tiap 8 jam",
+            "Metronidazole 500 mg iv tiap 8 jam + Paromomycin 25 mg/kgbb po",
+            "Aspirasi abses",
+            "Pembedahan",
+            "Metronidazole 500 mg iv tiap 8 jam + Paromomycin 25 mg/kgbb po + aspirasi abses"
+        ],
+        answer: 4,
+        explain: "Diameter abses 8 cm memerlukan terapi obat dan aspirasi abses."
+    },
+    {
+        q: "Yang mana dari pernyataan di bawah ini TIDAK sesuai untuk patogenesis abses hati amoeba:",
+        options: [
+            "Amoeba menginvasi mukosa kolon membentuk ulkus flask shaped",
+            "Penularan fecal-oral melalui makanan atau air yang terkontaminasi",
+            "Lokasi tersering abses hati amoeba adalah di lobus kanan dekat diafragma",
+            "Kista amoeba lisis oleh asam lambung dan melepaskan trofozoit yang kemudian menginvasi usus halus",
+            "Tidak semua strain E. histolytica mempunyai kemampuan untuk menginvasi mukosa kolon"
+        ],
+        answer: 3,
+        explain: "Pernyataan ini tidak sesuai dengan patogenesis abses hati amoeba."
+    },
+    {
+        q: "Yang mana pernyataan berikut ini sesuai untuk abses hati amoeba:",
+        options: [
+            "Organisme penyebabnya biasanya polimikroba",
+            "Cairan abses berwarna coklat kemerahan seperti anchovy paste atau chocolate sauce merupakan ciri khas dari abses hati amoeba",
+            "Dengan USG Color Dopler tampak penguatan di tengah lesi",
+            "Kista merupakan bentuk infeksi yang lisis oleh asam lambung",
+            "Abses biasanya di lobus kiri"
+        ],
+        answer: 1,
+        explain: "Cairan seperti anchovy paste adalah ciri khas abses hati amoeba."
+    },
+    {
+        q: "Ikterus merupakan gejala yang harus ada pada pasien dengan cholecystitis akut.",
+        options: ["True", "False"],
+        answer: 1,
+        explain: "Salah."
+    },
+    {
+        q: "Cholecystitis akut bisa ditegakkan hanya berdasarkan pemeriksaan USG abdomen.",
+        options: ["True", "False"],
+        answer: 1,
+        explain: "Salah."
+    },
+    {
+        q: "Sebagian besar kasus cholecystitis akut adalah akibat dari adanya batu di dalam saluran empedu.",
+        options: ["True", "False"],
+        answer: 1,
+        explain: "Salah. Sebagian besar karena batu pada kandung empedu, bukan saluran empedu."
+    },
+    {
+        q: "Nyeri pada cholecystitis akut bisa dirasakan menjalar sampai ke scapula kanan.",
+        options: ["True", "False"],
+        answer: 0,
+        explain: "Benar."
+    },
+    {
+        q: "Semua pasien cholecystitis akut harus dilakukan tindakan pembedahan.",
+        options: ["True", "False"],
+        answer: 1,
+        explain: "Salah."
+    }
+];
+
+// ================= LOGIC =================
+let current = 0;
+let userAnswers = new Array(questions.length).fill(null);
+
+function startQuiz(){
+    document.getElementById("home").style.display = "none";
+    document.getElementById("quizContainer").style.display = "block";
+    showQuestion();
+}
+
+function showQuestion(){
+    let q = questions[current];
+    let html = `<h3>${current + 1}. ${q.q}</h3><div class="options">`;
+
+    q.options.forEach((opt, i) => {
+        const selectedClass = userAnswers[current] === i ? "selected" : "";
+        html += `
+            <label class="${selectedClass}" onclick="selectAnswer(${i})">
+                <input type="radio" name="answer" ${userAnswers[current] === i ? "checked" : ""} style="margin-right:8px;">
+                ${opt}
+            </label>
+        `;
+    });
+
+    html += `</div>`;
+    document.getElementById("quiz").innerHTML = html;
+
+    document.getElementById("nav-buttons").innerHTML = `
+        <button onclick="prev()" ${current === 0 ? "disabled" : ""}>Prev</button>
+        <button onclick="next()">${current === questions.length - 1 ? "Finish" : "Next"}</button>
+    `;
+
+    document.getElementById("result").innerText = `Soal ${current + 1} / ${questions.length}`;
+}
+
+function selectAnswer(i){
+    userAnswers[current] = i;
+    showQuestion();
+}
+
+function next(){
+    if(current < questions.length - 1){
+        current++;
+        showQuestion();
+    } else {
+        finish();
+    }
+}
+
+function prev(){
+    if(current > 0){
+        current--;
+        showQuestion();
+    }
+}
+
+function finish(){
+    let score = 0;
+    let reviewHtml = "<h3>Hasil Quiz</h3>";
+
+    questions.forEach((q, idx) => {
+        const correct = userAnswers[idx] === q.answer;
+        if(correct) score++;
+
+        reviewHtml += `
+            <div style="margin-bottom:20px; padding:12px; border:1px solid #ddd; border-radius:8px;">
+                <b>${idx + 1}. ${q.q}</b><br>
+                Jawaban kamu: ${userAnswers[idx] !== null ? q.options[userAnswers[idx]] : "<i>Belum dijawab</i>"}<br>
+                Jawaban benar: <b>${q.options[q.answer]}</b><br>
+                <small>${q.explain}</small>
+            </div>
+        `;
+    });
+
+    document.getElementById("result").innerText = `Score: ${score} / ${questions.length}`;
+    document.getElementById("quiz").innerHTML = reviewHtml;
+    document.getElementById("nav-buttons").innerHTML = "";
+}
+</script>
+
+</body>
+</html>
